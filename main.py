@@ -18,19 +18,7 @@ def get_resonse(url):
     return response
 
 
-def download_image(url, filename, folder='images/'):
-    Path(folder).mkdir(exist_ok=True)
-    filename = sanitize_filename(filename)
-    filepath = os.path.join(folder, filename)
-    response = get_resonse(url)
-    with open(f'{filepath}', 'wb') as file:
-        file.write(response.content)
-    return filepath
-    print(url, filename, folder)
-
-
-def download_txt(url, filename, folder='books/'):
-    Path(folder).mkdir(exist_ok=True)
+def download_content(url, filename, folder):
     filename = sanitize_filename(filename)
     filepath = os.path.join(folder, filename)
     response = get_resonse(url)
@@ -89,7 +77,9 @@ def main():
     args = parser.parse_args()
 
     folder_book_name = args.book
+    Path(folder_book_name).mkdir(exist_ok=True)
     folder_img_name = args.image
+    Path(folder_img_name).mkdir(exist_ok=True)
     page_start_id = args.start_id
     page_end_id = args.end_id
 
@@ -99,20 +89,26 @@ def main():
             response = get_resonse(page_url)
             book_description = parse_book_page(response)
 
-            book_url = f'https://tululu.org/txt.php?id={page_id}'
             book_title = book_description['book_title']
+            book_author = book_description['book_author']
             book_img_src = book_description['book_img_src']
             book_genres = book_description['book_genres']
+            book_comments = book_description['book_comments']
+
+            book_url = f'https://tululu.org/txt.php?id={page_id}'
             book_filename = f'{page_id}.{book_title}.txt'
             book_img_url = urljoin(book_url, book_img_src)
             img_filename = f"{urlsplit(book_img_url).path.split('/')[-1]}"
 
-            book_filepath = download_txt(book_url,
-                                         book_filename,
-                                         folder_book_name)
-            img_filepath = download_image(book_img_url,
-                                          img_filename,
-                                          folder_img_name)
+            book_filepath = download_content(book_url,
+                                             book_filename,
+                                             folder_book_name)
+            img_filepath = download_content(book_img_url,
+                                            img_filename,
+                                            folder_img_name)
+
+            print('Заголовок: {}\nАвтор: {}\nЖанр: {}\nКомментарии: {}\n'
+                  .format(book_title, book_author, book_genres, book_comments))
 
         except requests.exceptions.HTTPError as redirect_error:
             print(f'{page_url} -> переадресация на {redirect_error}')
