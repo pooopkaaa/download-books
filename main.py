@@ -6,6 +6,7 @@ from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
+import argparse
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -64,11 +65,35 @@ def check_for_redirect(response):
 
 
 def main():
-    folder_book_name = "books/"
-    folder_img_name = "images/"
-    page_amount = 10
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s',
+                        '--start_id',
+                        default='1',
+                        type=int,
+                        help='С какой страницы скачивать')
+    parser.add_argument('-e',
+                        '--end_id',
+                        default='10',
+                        type=int,
+                        help='По какую страницу скачивать')
+    parser.add_argument('-b',
+                        '--book',
+                        default='books/',
+                        type=str,
+                        help='Куда сохранять книги')
+    parser.add_argument('-i',
+                        '--image',
+                        default='images/',
+                        type=str,
+                        help='Куда сохранять картинки')
+    args = parser.parse_args()
 
-    for page_id in range(1, page_amount + 1):
+    folder_book_name = args.book
+    folder_img_name = args.image
+    page_start_id = args.start_id
+    page_end_id = args.end_id
+
+    for page_id in range(page_start_id, page_end_id + 1):
         page_url = f'https://tululu.org/b{page_id}/'
         try:
             response = get_resonse(page_url)
