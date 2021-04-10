@@ -85,7 +85,7 @@ def main():
                         '--image',
                         default='images/',
                         type=str,
-                        help='Куда сохранять картинки')
+                        help='Куда сохранять обложки')
     args = parser.parse_args()
 
     folder_book_name = args.book
