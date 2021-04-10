@@ -43,7 +43,11 @@ def parse_book_page(response):
     book_img_src = soup.find('div', class_='bookimage').img['src']
     book_comments = [book_comment.span.text for book_comment in soup.find_all('div', class_='texts')]
     book_genres = [book_genre.text for book_genre in soup.find('span', class_='d_book').find_all('a')]
-    return book_title, book_author, book_img_src, book_comments, book_genres
+    return {'book_title': book_title,
+            'book_author': book_author,
+            'book_img_src': book_img_src,
+            'book_comments': book_comments,
+            'book_genres': book_genres}
 
 
 def check_for_redirect(response):
@@ -62,9 +66,12 @@ def main():
             response = get_resonse(url)
 
             book_url = f'https://tululu.org/txt.php?id={book_id}'
-            book_title, book_author, book_img_src, book_comments, book_genres = parse_book_page(response)
+            book_description = parse_book_page(response)
+            book_title = book_description['book_title']
+            book_img_src = book_description['book_img_src']
+            book_genres = book_description['book_genres']
             book_filename = f'{book_id}.{book_title}.txt'
-            # book_filepath = download_txt(book_url, filename, folder_book_name)
+            # book_filepath = download_txt(book_url, book_filename, folder_book_name)
 
             book_img_url = urljoin(book_url, book_img_src)
             img_filename = f"{urlsplit(book_img_url).path.split('/')[-1]}"
