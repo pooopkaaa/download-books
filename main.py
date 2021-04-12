@@ -36,8 +36,10 @@ def get_command_line_args():
                         help='Куда сохранять обложки')
     return parser.parse_args()
 
+
 def get_resonse(url):
     response = requests.get(url, verify=False)
+    response.raise_for_status()
     check_for_redirect(response)
     return response
 
@@ -73,7 +75,7 @@ def parse_book_page(response):
 
 def check_for_redirect(response):
     if response.url == 'https://tululu.org/':
-        raise requests.exceptions.HTTPError(response.url)
+        raise requests.exceptions.URLRequired(response.url)
 
 
 def main():
@@ -81,7 +83,8 @@ def main():
     Path(command_line_args.book).mkdir(exist_ok=True)
     Path(command_line_args.image).mkdir(exist_ok=True)
 
-    for page_id in range(command_line_args.start_id, command_line_args.end_id + 1):
+    for page_id in range(command_line_args.start_id,
+                         command_line_args.end_id + 1):
         page_url = f'https://tululu.org/b{page_id}/'
         try:
             response = get_resonse(page_url)
@@ -108,8 +111,10 @@ def main():
             print('Заголовок: {}\nАвтор: {}\nЖанр: {}\nКомментарии: {}\n'
                   .format(book_title, book_author, book_genres, book_comments))
 
-        except requests.exceptions.HTTPError as redirect_error:
+        except requests.exceptions.URLRequired as redirect_error:
             print(f'{page_url} -> переадресация на {redirect_error}')
+        except requests.exceptions.HTTPError as http_error:
+            print(f'Ответ пришел с ошибкой -> {http_error}')
 
 
 if __name__ == '__main__':
