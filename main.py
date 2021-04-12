@@ -106,11 +106,11 @@ def main():
             img_filename = f"{unquote(urlsplit(book_img_url).path.split('/')[-1])}"
             print(img_filename)
             book_filepath = download_txt(book_url,
-                                             book_filename,
-                                             command_line_args.book)
+                                         book_filename,
+                                         command_line_args.book)
             img_filepath = download_image(book_img_url,
-                                            img_filename,
-                                            command_line_args.image)
+                                          img_filename,
+                                          command_line_args.image)
 
             print('Заголовок: {}\nАвтор: {}\nЖанр: {}\nКомментарии: {}\n'
                   .format(book_title, book_author, book_genres, book_comments))
