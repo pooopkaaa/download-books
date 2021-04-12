@@ -55,10 +55,7 @@ def download_content(url, filename, folder):
 
 def parse_book_page(response):
     soup = BeautifulSoup(response.text, 'lxml')
-    book_title, book_author = [book_property.strip() for book_property in soup
-                               .find('h1')
-                               .text
-                               .split('::')]
+    book_title, book_author = soup.find('h1').text.split('::')
     book_img_src = soup.find('div', class_='bookimage').img['src']
     book_comments = [book_comment.span.text for book_comment in soup
                      .find_all('div', class_='texts')]
@@ -66,8 +63,8 @@ def parse_book_page(response):
                    .find('span', class_='d_book')
                    .find_all('a')]
 
-    return {'book_title': book_title,
-            'book_author': book_author,
+    return {'book_title': book_title.strip(),
+            'book_author': book_author.strip(),
             'book_img_src': book_img_src,
             'book_comments': book_comments,
             'book_genres': book_genres}
