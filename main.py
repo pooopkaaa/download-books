@@ -1,6 +1,6 @@
 import os
 import urllib3
-from urllib.parse import urljoin, urlsplit, urlencode
+from urllib.parse import urljoin, urlsplit, urlencode, unquote
 from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
@@ -95,8 +95,8 @@ def main():
             book_url = f'https://tululu.org/txt.php?{book_url_param}'
             book_filename = f'{page_id}.{book_title}.txt'
             book_img_url = urljoin(book_url, book_img_src)
-            img_filename = f"{urlsplit(book_img_url).path.split('/')[-1]}"
-
+            img_filename = f"{unquote(urlsplit(book_img_url).path.split('/')[-1])}"
+            print(img_filename)
             book_filepath = download_content(book_url,
                                              book_filename,
                                              command_line_args.book)
