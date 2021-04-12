@@ -43,11 +43,20 @@ def get_response(url):
     return response
 
 
-def download_content(url, filename, folder):
+def download_txt(url, filename, folder):
     filename = sanitize_filename(filename)
     filepath = os.path.join(folder, filename)
     response = get_response(url)
-    with open(f'{filepath}', 'wb') as file:
+    with open(filepath, 'w') as file:
+        file.write(response.text)
+    return filepath
+
+
+def download_image(url, filename, folder):
+    filename = sanitize_filename(filename)
+    filepath = os.path.join(folder, filename)
+    response = get_response(url)
+    with open(filepath, 'wb') as file:
         file.write(response.content)
     return filepath
 
@@ -96,10 +105,10 @@ def main():
             book_img_url = urljoin(book_url, book_img_src)
             img_filename = f"{unquote(urlsplit(book_img_url).path.split('/')[-1])}"
             print(img_filename)
-            book_filepath = download_content(book_url,
+            book_filepath = download_txt(book_url,
                                              book_filename,
                                              command_line_args.book)
-            img_filepath = download_content(book_img_url,
+            img_filepath = download_image(book_img_url,
                                             img_filename,
                                             command_line_args.image)
 
