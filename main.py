@@ -12,6 +12,30 @@ import argparse
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+def get_command_line_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s',
+                        '--start_id',
+                        default='1',
+                        type=int,
+                        help='С какой страницы скачивать')
+    parser.add_argument('-e',
+                        '--end_id',
+                        default='10',
+                        type=int,
+                        help='По какую страницу скачивать')
+    parser.add_argument('-b',
+                        '--book',
+                        default='books/',
+                        type=str,
+                        help='Куда сохранять книги')
+    parser.add_argument('-i',
+                        '--image',
+                        default='images/',
+                        type=str,
+                        help='Куда сохранять обложки')
+    return parser.parse_args()
+
 def get_resonse(url):
     response = requests.get(url, verify=False)
     check_for_redirect(response)
@@ -53,37 +77,11 @@ def check_for_redirect(response):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s',
-                        '--start_id',
-                        default='1',
-                        type=int,
-                        help='С какой страницы скачивать')
-    parser.add_argument('-e',
-                        '--end_id',
-                        default='10',
-                        type=int,
-                        help='По какую страницу скачивать')
-    parser.add_argument('-b',
-                        '--book',
-                        default='books/',
-                        type=str,
-                        help='Куда сохранять книги')
-    parser.add_argument('-i',
-                        '--image',
-                        default='images/',
-                        type=str,
-                        help='Куда сохранять обложки')
-    args = parser.parse_args()
+    command_line_args = get_command_line_args()
+    Path(command_line_args.book).mkdir(exist_ok=True)
+    Path(command_line_args.image).mkdir(exist_ok=True)
 
-    folder_book_name = args.book
-    Path(folder_book_name).mkdir(exist_ok=True)
-    folder_img_name = args.image
-    Path(folder_img_name).mkdir(exist_ok=True)
-    page_start_id = args.start_id
-    page_end_id = args.end_id
-
-    for page_id in range(page_start_id, page_end_id + 1):
+    for page_id in range(command_line_args.start_id, command_line_args.end_id + 1):
         page_url = f'https://tululu.org/b{page_id}/'
         try:
             response = get_resonse(page_url)
@@ -102,10 +100,10 @@ def main():
 
             book_filepath = download_content(book_url,
                                              book_filename,
-                                             folder_book_name)
+                                             command_line_args.book)
             img_filepath = download_content(book_img_url,
                                             img_filename,
-                                            folder_img_name)
+                                            command_line_args.image)
 
             print('Заголовок: {}\nАвтор: {}\nЖанр: {}\nКомментарии: {}\n'
                   .format(book_title, book_author, book_genres, book_comments))
