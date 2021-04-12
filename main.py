@@ -37,7 +37,7 @@ def get_command_line_args():
     return parser.parse_args()
 
 
-def get_resonse(url):
+def get_response(url):
     response = requests.get(url, verify=False)
     response.raise_for_status()
     check_for_redirect(response)
@@ -47,7 +47,7 @@ def get_resonse(url):
 def download_content(url, filename, folder):
     filename = sanitize_filename(filename)
     filepath = os.path.join(folder, filename)
-    response = get_resonse(url)
+    response = get_response(url)
     with open(f'{filepath}', 'wb') as file:
         file.write(response.content)
     return filepath
@@ -87,7 +87,7 @@ def main():
                          command_line_args.end_id + 1):
         page_url = f'https://tululu.org/b{page_id}/'
         try:
-            response = get_resonse(page_url)
+            response = get_response(page_url)
             book_description = parse_book_page(response)
 
             book_title = book_description['book_title']
