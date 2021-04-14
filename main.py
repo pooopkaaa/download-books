@@ -36,17 +36,17 @@ def get_command_line_args():
     return parser.parse_args()
 
 
-def get_response(url):
-    response = requests.get(url, verify=False)
+def get_response(url, payload=[]):
+    response = requests.get(url, params=payload, verify=False)
     response.raise_for_status()
     check_for_redirect(response)
     return response
 
 
-def download_txt(url, filename, folder):
+def download_txt(url, payload, filename, folder):
     filename = sanitize_filename(filename)
     filepath = os.path.join(folder, filename)
-    response = get_response(url)
+    response = get_response(url, payload)
     with open(filepath, 'w') as file:
         file.write(response.text)
     return filepath
@@ -100,12 +100,14 @@ def main():
             book_img_src = book_description['book_img_src']
             book_genres = book_description['book_genres']
             book_comments = book_description['book_comments']
-            book_url = f"https://tululu.org/txt.php?{urlencode({'id': page_id})}"
+            book_url = 'https://tululu.org/txt.php'
+            book_url_payload = {'id': page_id}
             book_filename = f'{page_id}.{book_title}.txt'
             book_img_url = urljoin(book_url, book_img_src)
             img_filename = f"{unquote(urlsplit(book_img_url).path.split('/')[-1])}"
             print(img_filename)
             book_filepath = download_txt(book_url,
+                                         book_url_payload,
                                          book_filename,
                                          command_line_args.book)
             img_filepath = download_image(book_img_url,
