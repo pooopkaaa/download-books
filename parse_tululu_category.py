@@ -1,5 +1,6 @@
 import os
 import argparse
+from itertools import count
 import urllib3
 import json
 from urllib.parse import urljoin, urlsplit, unquote
@@ -12,21 +13,42 @@ from pathvalidate import sanitize_filename
 
 def get_command_line_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-b',
-                        '--book',
+    parser.add_argument('-d',
+                        '--dest_folder',
                         default='books/',
                         type=str,
-                        help='Куда сохранять книги')
+                        help='Укажите папку для всех файлов')
+    parser.add_argument('-b',
+                        '--book',
+                        default='txt/',
+                        type=str,
+                        help='Укажите папку для txt файлов')
     parser.add_argument('-i',
                         '--image',
                         default='images/',
                         type=str,
-                        help='Куда сохранять обложки')
-    parser.add_argument('-d',
-                        '--description',
+                        help='Укажите папку для картинок')
+    parser.add_argument('-j',
+                        '--json_path',
                         default='books',
                         type=str,
-                        help='Название файла с описанием книг')
+                        help='Укажите путь к файлу с описанием книг')
+    parser.add_argument('-s',
+                        '--start_page',
+                        default=0,
+                        type=int,
+                        help='Укажите с какой страницы скачивать информацию по книгам')
+    parser.add_argument('-e',
+                        '--end_page',
+                        default=702,
+                        type=int,
+                        help='Укажите до какой страницы скачивать информацию по книгам')
+    parser.add_argument('--skip_imgs',
+                        action='store_true',
+                        help='Укажите аргумент если не надо скачивать картинки')
+    parser.add_argument('--skip_txt',
+                        action='store_true',
+                        help='Укажите аргумент если не надо скачивать книги')
     return parser.parse_args()
 
 
@@ -100,18 +122,23 @@ def main():
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     command_line_args = get_command_line_args()
 
-    Path(command_line_args.book).mkdir(exist_ok=True)
-    Path(command_line_args.image).mkdir(exist_ok=True)
+    dest_folder_filepath = Path(command_line_args.dest_folder)
+    dest_folder_filepath.mkdir(exist_ok=True)
 
-    books_description_filename = command_line_args.description + '.json'
+    txt_filepath = Path(os.path.join(dest_folder_filepath, command_line_args.book))
+    txt_filepath.mkdir(exist_ok=True)
+
+    images_filepath = Path(os.path.join(dest_folder_filepath, command_line_args.image))
+    images_filepath.mkdir(exist_ok=True)
+
+    books_description_filename = command_line_args.json_path + '.json'
     if not os.path.exists(books_description_filename):
         create_json_file(books_description_filename)
 
-    books_page_amount = 10
     site_url = 'https://tululu.org/'
     book_txt_url = 'https://tululu.org/txt.php'
 
-    for books_page_number in range(1, books_page_amount + 1):
+    for books_page_number in range(command_line_args.start_page, command_line_args.end_page):
         books_page_url = f'https://tululu.org/l55/{books_page_number}'
 
         print(f'Номер страницы {books_page_number}')
@@ -129,25 +156,26 @@ def main():
                 book_title = book_description['title']
                 book_img_src = book_description.pop('book_img_src')
 
-                book_txt_payload = {'id': book_id}
-                book_filename = f'{book_id}.{book_title}.txt'
-                book_filepath = download_txt(
-                    book_txt_url,
-                    book_txt_payload,
-                    book_filename,
-                    command_line_args.book
-                )
+                if not command_line_args.skip_txt:
+                    book_txt_payload = {'id': book_id}
+                    book_filename = f'{book_id}.{book_title}.txt'
+                    book_filepath = download_txt(
+                        book_txt_url,
+                        book_txt_payload,
+                        book_filename,
+                        txt_filepath
+                    )
+                    book_description['book_path'] = book_filepath
 
-                book_img_url = urljoin(book_url, book_img_src)
-                img_filename = f"{unquote(urlsplit(book_img_url).path.split('/')[-1])}"
-                img_filepath = download_image(
-                    book_img_url,
-                    img_filename,
-                    command_line_args.image
-                )
-
-                book_description['img_src'] = img_filepath
-                book_description['book_path'] = book_filepath
+                if not command_line_args.skip_imgs:
+                    book_img_url = urljoin(book_url, book_img_src)
+                    img_filename = f"{unquote(urlsplit(book_img_url).path.split('/')[-1])}"
+                    img_filepath = download_image(
+                        book_img_url,
+                        img_filename,
+                        images_filepath
+                    )
+                    book_description['img_src'] = img_filepath
 
                 save_book_description(book_description, books_description_filename)
 
