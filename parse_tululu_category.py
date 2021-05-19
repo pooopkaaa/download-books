@@ -30,12 +30,12 @@ def get_command_line_args():
                         help='Укажите папку для картинок')
     parser.add_argument('-j',
                         '--json_path',
-                        default='books',
+                        default='descriptions',
                         type=str,
                         help='Укажите путь к файлу с описанием книг')
     parser.add_argument('-s',
                         '--start_page',
-                        default=0,
+                        default=1,
                         type=int,
                         help='Укажите с какой страницы скачивать информацию по книгам')
     parser.add_argument('-e',
