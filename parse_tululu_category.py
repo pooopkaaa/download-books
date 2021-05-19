@@ -68,13 +68,12 @@ def download_image(url, filename, folder):
 
 def parse_book_page(response):
     soup = BeautifulSoup(response.text, 'lxml')
-    book_title, book_author = soup.find('h1').text.split('::')
-    book_img_src = soup.find('div', class_='bookimage').img['src']
-    book_comments = [book_comment.span.text for book_comment in soup
-                     .find_all('div', class_='texts')]
+    book_title, book_author = soup.select_one('h1').text.split('::')
+    book_img_src = soup.select_one('div.bookimage img')['src']
+    book_comments = [book_comment.text for book_comment in soup
+                     .select('div.texts span')]
     book_genres = [book_genre.text for book_genre in soup
-                   .find('span', class_='d_book')
-                   .find_all('a')]
+                   .select('span.d_book a')]
 
     return {'title': book_title.strip(),
             'author': book_author.strip(),
@@ -92,8 +91,8 @@ def get_response(url, payload=[]):
 
 def get_book_hrefs(response):
     soup = BeautifulSoup(response.text, 'lxml')
-    book_cards = soup.find_all('table', class_='d_book')
-    book_hrefs = [book_card.find('a')['href'] for book_card in book_cards]
+    book_hrefs = [book_card.select_one('a')['href'] for book_card in soup
+                  .select('table.d_book')]
     return book_hrefs
 
 
