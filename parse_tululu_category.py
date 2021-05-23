@@ -1,8 +1,8 @@
 import os
 import argparse
-from itertools import count
 import urllib3
 import json
+import logging
 from urllib.parse import urljoin, urlsplit, unquote
 from pathlib import Path
 
@@ -12,7 +12,9 @@ from pathvalidate import sanitize_filename
 
 
 def get_command_line_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description='Скрипт для cкачивания книг с сайта tululu.org.'
+    )
     parser.add_argument('-d',
                         '--dest_folder',
                         default='books/',
@@ -40,7 +42,6 @@ def get_command_line_args():
                         help='Укажите с какой страницы скачивать информацию по книгам')
     parser.add_argument('-e',
                         '--end_page',
-                        default=702,
                         type=int,
                         help='Укажите до какой страницы скачивать информацию по книгам')
     parser.add_argument('--skip_imgs',
@@ -50,6 +51,27 @@ def get_command_line_args():
                         action='store_true',
                         help='Укажите аргумент если не надо скачивать книги')
     return parser.parse_args()
+
+
+def get_directories(command_line_args):
+    dest_folder_filepath = Path(command_line_args.dest_folder)
+    dest_folder_filepath.mkdir(exist_ok=True)
+
+    txt_filepath = Path(os.path.join(dest_folder_filepath, command_line_args.book))
+    txt_filepath.mkdir(exist_ok=True)
+
+    images_filepath = Path(os.path.join(dest_folder_filepath, command_line_args.image))
+    images_filepath.mkdir(exist_ok=True)
+
+    return txt_filepath, images_filepath
+
+
+def get_books_pages_amount():
+    url = 'https://tululu.org/l55/'
+    response = get_response(url)
+    soup = BeautifulSoup(response.text, 'lxml')
+    books_pages_amount = soup.select('div#content p.center a')[-1].text
+    return int(books_pages_amount)
 
 
 def check_for_redirect(response):
@@ -62,16 +84,14 @@ def create_json_file(filename):
         file.write('[]')
 
 
-def save_book_description(book_description, filename):
-    with open(filename, 'r+', encoding='utf-8') as file:
-        books_description = json.load(file)
-        books_description.append(book_description)
-        file.seek(0)
-        json.dump(books_description, file, ensure_ascii=False, indent=4)
+def save_books_descriptions(book_descriptions, filename):
+    with open(filename, 'w+', encoding='utf-8') as file:
+        json.dump(book_descriptions, file, ensure_ascii=False, indent=4)
 
 
-def download_txt(url, payload, filename, folder):
-    filename = sanitize_filename(filename)
+def download_txt(url, book_id, book_title, folder):
+    payload = {'id': book_id}
+    filename = sanitize_filename(f'{book_id}.{book_title}.txt')
     filepath = os.path.join(folder, filename)
     response = get_response(url, payload)
     with open(filepath, 'w', encoding='utf-8') as file:
@@ -92,10 +112,14 @@ def parse_book_page(response):
     soup = BeautifulSoup(response.text, 'lxml')
     book_title, book_author = soup.select_one('h1').text.split('::')
     book_img_src = soup.select_one('div.bookimage img')['src']
-    book_comments = [book_comment.text for book_comment in soup
-                     .select('div.texts span')]
-    book_genres = [book_genre.text for book_genre in soup
-                   .select('span.d_book a')]
+    book_comments = [
+        book_comment.text
+        for book_comment in soup.select('div.texts span')
+    ]
+    book_genres = [
+        book_genre.text
+        for book_genre in soup.select('span.d_book a')
+    ]
 
     return {'title': book_title.strip(),
             'author': book_author.strip(),
@@ -111,79 +135,95 @@ def get_response(url, payload=[]):
     return response
 
 
-def get_book_hrefs(response):
+def get_books_page(books_page_number):
+    url = f'https://tululu.org/l55/{books_page_number}'
+    return get_response(url)
+
+
+def get_books_hrefs_on_page(response):
     soup = BeautifulSoup(response.text, 'lxml')
-    book_hrefs = [book_card.select_one('a')['href'] for book_card in soup
-                  .select('table.d_book')]
+    book_hrefs = [
+        book_card.select_one('a')['href']
+        for book_card in soup.select('table.d_book')
+    ]
     return book_hrefs
+
+
+def fetch_book(book_href, txt_filepath, images_filepath, skip_text_bool, skip_imgs_bool):
+    site_url = 'https://tululu.org/'
+    book_txt_url = 'https://tululu.org/txt.php'
+    book_id = book_href.replace('b', '').replace('/', '')
+    book_url = urljoin(site_url, book_href)
+    book_page = get_response(book_url)
+    book_description = parse_book_page(book_page)
+    book_title = book_description['title']
+    book_img_src = book_description.pop('book_img_src')
+
+    if not skip_text_bool:
+        book_filepath = download_txt(
+            book_txt_url,
+            book_id,
+            book_title,
+            txt_filepath
+        )
+        book_description['book_path'] = book_filepath
+
+    if not skip_imgs_bool:
+        book_img_url = urljoin(book_url, book_img_src)
+        img_filename = f"{unquote(urlsplit(book_img_url).path.split('/')[-1])}"
+        img_filepath = download_image(
+            book_img_url,
+            img_filename,
+            images_filepath
+        )
+        book_description['img_src'] = img_filepath
+
+    return book_description
 
 
 def main():
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     command_line_args = get_command_line_args()
+    input_books_pages_amount = command_line_args.end_page
+    books_pages_amount = get_books_pages_amount()
 
-    dest_folder_filepath = Path(command_line_args.dest_folder)
-    dest_folder_filepath.mkdir(exist_ok=True)
+    if input_books_pages_amount and input_books_pages_amount < books_pages_amount:
+        books_pages_amount = input_books_pages_amount
+    elif input_books_pages_amount and input_books_pages_amount > books_pages_amount:
+        logging.error(f'Количество страниц с книгами всего: {books_pages_amount}')
+        exit()
 
-    txt_filepath = Path(os.path.join(dest_folder_filepath, command_line_args.book))
-    txt_filepath.mkdir(exist_ok=True)
+    txt_filepath, images_filepath = get_directories(command_line_args)
+    books_descriptions_filename = command_line_args.json_path + '.json'
 
-    images_filepath = Path(os.path.join(dest_folder_filepath, command_line_args.image))
-    images_filepath.mkdir(exist_ok=True)
+    books_hrefs = []
+    for books_page_number in range(command_line_args.start_page, books_pages_amount+1):
+        try:
+            books_page = get_books_page(books_page_number)
+            books_hrefs.extend(get_books_hrefs_on_page(books_page))
+        except requests.exceptions.HTTPError as http_error:
+            logging.error(f'Ответ пришел с ошибкой -> {http_error}')
+            continue
 
-    books_description_filename = command_line_args.json_path + '.json'
-    if not os.path.exists(books_description_filename):
-        create_json_file(books_description_filename)
+    books_descriptions = []
+    for book_href in books_hrefs:
+        try:
+            book_description = fetch_book(
+                book_href,
+                txt_filepath,
+                images_filepath,
+                command_line_args.skip_txt,
+                command_line_args.skip_imgs
+            )
+            books_descriptions.append(book_description)
+        except requests.exceptions.URLRequired as redirect_error:
+            logging.warning(f'Переадресация на {redirect_error}')
+            continue
+        except requests.exceptions.HTTPError as http_error:
+            logging.error(f'Ответ пришел с ошибкой -> {http_error}')
+            continue
 
-    site_url = 'https://tululu.org/'
-    book_txt_url = 'https://tululu.org/txt.php'
-
-    for books_page_number in range(command_line_args.start_page, command_line_args.end_page):
-        books_page_url = f'https://tululu.org/l55/{books_page_number}'
-
-        print(f'Номер страницы {books_page_number}')
-
-        books_page = get_response(books_page_url)
-        book_hrefs = get_book_hrefs(books_page)
-
-        for book_href in book_hrefs:
-            try:
-                book_id = book_href.replace('b', '').replace('/', '')
-                book_url = urljoin(site_url, book_href)
-                book_page = get_response(book_url)
-                book_description = parse_book_page(book_page)
-
-                book_title = book_description['title']
-                book_img_src = book_description.pop('book_img_src')
-
-                if not command_line_args.skip_txt:
-                    book_txt_payload = {'id': book_id}
-                    book_filename = f'{book_id}.{book_title}.txt'
-                    book_filepath = download_txt(
-                        book_txt_url,
-                        book_txt_payload,
-                        book_filename,
-                        txt_filepath
-                    )
-                    book_description['book_path'] = book_filepath
-
-                if not command_line_args.skip_imgs:
-                    book_img_url = urljoin(book_url, book_img_src)
-                    img_filename = f"{unquote(urlsplit(book_img_url).path.split('/')[-1])}"
-                    img_filepath = download_image(
-                        book_img_url,
-                        img_filename,
-                        images_filepath
-                    )
-                    book_description['img_src'] = img_filepath
-
-                save_book_description(book_description, books_description_filename)
-
-                print(f'Ссылка на книгу {book_url}')
-            except requests.exceptions.URLRequired as redirect_error:
-                print(f'{book_url} -> переадресация на {redirect_error}')
-            except requests.exceptions.HTTPError as http_error:
-                print(f'Ответ пришел с ошибкой -> {http_error}')
+    save_books_descriptions(books_descriptions, books_descriptions_filename)
 
 
 if __name__ == '__main__':
