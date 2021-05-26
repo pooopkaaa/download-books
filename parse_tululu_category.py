@@ -79,11 +79,6 @@ def check_for_redirect(response):
         raise requests.exceptions.URLRequired(response.url)
 
 
-def create_json_file(filename):
-    with open(filename, 'w') as file:
-        file.write('[]')
-
-
 def save_books_descriptions(book_descriptions, filename):
     with open(filename, 'w+', encoding='utf-8') as file:
         json.dump(book_descriptions, file, ensure_ascii=False, indent=4)
@@ -184,20 +179,18 @@ def fetch_book(book_href, txt_filepath, images_filepath, skip_text_bool, skip_im
 def main():
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     command_line_args = get_command_line_args()
-    input_books_pages_amount = command_line_args.end_page
-    books_pages_amount = get_books_pages_amount()
+    input_books_end_page = command_line_args.end_page
+    books_max_page = get_books_pages_amount()
 
-    if input_books_pages_amount and input_books_pages_amount < books_pages_amount:
-        books_pages_amount = input_books_pages_amount
-    elif input_books_pages_amount and input_books_pages_amount > books_pages_amount:
-        logging.error(f'Количество страниц с книгами всего: {books_pages_amount}')
+    if not input_books_end_page or input_books_end_page > books_max_page:
+        logging.error(f'Количество страниц с книгами всего: {books_max_page}')
         exit()
 
     txt_filepath, images_filepath = get_directories(command_line_args)
     books_descriptions_filename = command_line_args.json_path + '.json'
 
     books_hrefs = []
-    for books_page_number in range(command_line_args.start_page, books_pages_amount+1):
+    for books_page_number in range(command_line_args.start_page, input_books_end_page + 1):
         try:
             books_page = get_books_page(books_page_number)
             books_hrefs.extend(get_books_hrefs_on_page(books_page))
