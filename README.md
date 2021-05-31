@@ -1,9 +1,11 @@
-# Своя онлайн библиотека
+# Своя библиотека
+
+![Screen](https://github.com/pooopkaaa/download-books/tree/main/site/screen.png)
 
 Проект состоит из двух частей:
 
 - Скрипт для cкачивания книг с сайта [tululu.org](https://tululu.org/).
-- Cтатичный сайт для удобного просмотра скачанных книг.
+- Cтатичный сайт для удобного просмотра скачанных книг, пример [сайта](https://pooopkaaa.github.io/download-books/site/pages/index.html).
 
 ## Установка
 
