@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon-96x96.png">
+    <title>Книги - Страница {{current_page}}</title>
+</head>
+<body>
+    <div class="container">
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                {% if current_page == 1 %}
+                    <li class="page-item disabled"><span class="page-link">Предыдущая</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="index{{current_page - 1}}.html">Предыдущая</a></li>
+                {% endif %}
+                {% for page in range(1, pages_amount+1) %}
+                {% if current_page == page %}
+                    <li class="page-item active" aria-current="page">
+                        <a class="page-link" href="index{{current_page}}.html">{{current_page}} <span class="sr-only">(current)</span></a>
+                    </li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="index{{page}}.html">{{page}}</a></li>
+                {% endif %}
+                {% endfor %}    
+                {% if current_page == pages_amount %}
+                    <li class="page-item disabled"><span class="page-link">Следующая</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="index{{current_page + 1}}.html">Следующая</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% for row_book_description in grouped_book_description %}
+            <div class="row">
+                {% for book_description in row_book_description %}
+                    <div class="col">
+                        <div class="card mb-3" style="max-width: 540px;">
+                            <div class="row no-gutters">
+                            <div class="col-md-4">
+                                <img src="../{{book_description.img_src|replace('\\', '/')|urlencode}}" class="card-img" alt="{{book_description.title}}">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                <h5 class="card-title">{{book_description.title}}</h5>
+                                <p class="card-text">{{book_description.author}}</p>
+                                    {% for book_genre in book_description.genres %}
+                                        <span class="badge badge-info">{{book_genre}}</span>
+                                    {% endfor %}
+                                <p class="card-text"><small class="text-muted"><a href="../{{book_description.book_path|replace('\\','/')|urlencode}}">Читать</a></small></p>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="../js/jquery-3.3.1.slim.min.js"></script>
+    <script src="../js/popper.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+</body>
+</html>
