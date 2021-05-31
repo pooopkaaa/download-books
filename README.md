@@ -1,6 +1,6 @@
 # Своя библиотека
 
-![Screen](https://github.com/pooopkaaa/download-books/tree/main/site/screen.png)
+![Screen](https://github.com/pooopkaaa/download-books/blob/main/site/screen.png)
 
 Проект состоит из двух частей:
 
