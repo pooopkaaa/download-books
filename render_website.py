@@ -1,6 +1,13 @@
 import json
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from livereload import Server, shell
+
+
+def on_reload():
+    server = Server()
+    server.watch('*.rst', shell('make html', cwd='docs'))
+    server.serve()
 
 
 def read_file(filename):
@@ -25,10 +32,9 @@ def main():
         autoescape=select_autoescape(['html'])
     )
     template = env.get_template(template_filename)
-    
-    
     book_descriptions = read_file(book_descriptions_filename)
     get_render_page(template, book_descriptions)
+    on_reload()
 
 
 if __name__ == '__main__':
