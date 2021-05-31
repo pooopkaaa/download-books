@@ -21,10 +21,13 @@ def on_reload():
 
     chunked_for_row_book_descriptions = list(chunked(book_descriptions, 2))
     chunked_for_page_book_descriptions = list(chunked(chunked_for_row_book_descriptions, 10))
-
-    for page, chunked_for_page_book_description in enumerate(chunked_for_page_book_descriptions):
+    pages_amount = len(chunked_for_page_book_descriptions)
+    print(pages_amount)
+    for page, chunked_for_page_book_description in enumerate(chunked_for_page_book_descriptions, start=1):
         rendered_page = template.render(
-            chunked_for_page_book_description=chunked_for_page_book_description)
+            chunked_for_page_book_description=chunked_for_page_book_description,
+            pages_amount=pages_amount, 
+            current_page=page)
         filename = os.path.join('pages', f'index{page}.html')
         with open(filename, 'w', encoding="utf8") as file:
             file.write(rendered_page)
