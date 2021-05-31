@@ -48,6 +48,9 @@
                                 <div class="card-body">
                                 <h5 class="card-title">{{book_description.title}}</h5>
                                 <p class="card-text">{{book_description.author}}</p>
+                                    {% for book_genre in book_description.genres %}
+                                        <span class="badge badge-info">{{book_genre}}</span>
+                                    {% endfor %}
                                 <p class="card-text"><small class="text-muted"><a href="../{{book_description.book_path|replace('\\','/')|urlencode}}">Читать</a></small></p>
                                 </div>
                             </div>
