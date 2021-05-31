@@ -37,9 +37,9 @@
                 {% endif %}
             </ul>
         </nav>
-        {% for two_book_description in chunked_for_page_book_description %}
+        {% for row_book_description in grouped_book_description %}
             <div class="row">
-                {% for book_description in two_book_description %}
+                {% for book_description in row_book_description %}
                     <div class="col">
                         <div class="card mb-3" style="max-width: 540px;">
                             <div class="row no-gutters">
