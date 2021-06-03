@@ -53,7 +53,7 @@
                                     {% for book_genre in book_description.genres %}
                                         <span class="badge badge-info">{{book_genre}}</span>
                                     {% endfor %}
-                                <p class="card-text"><small class="text-muted"><a href="../{{book_description.book_path|replace('\\','/')|urlencode}}" target="_blank" rel="noopener noreferrer">Читать</a></small></p>
+                                <p class="card-text"><a href="../{{book_description.book_path|replace('\\','/')|urlencode}}" target="_blank" rel="noopener noreferrer">Читать</a></p>
                                 </div>
                             </div>
                             </div>
