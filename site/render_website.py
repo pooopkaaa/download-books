@@ -1,10 +1,10 @@
-from more_itertools import chunked
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-from livereload import Server, shell
-
 import json
-from pathlib import Path
 import os
+from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from livereload import Server
+from more_itertools import chunked
 
 
 def read_book_descriptions_file(book_descriptions_filename):
@@ -18,8 +18,18 @@ def read_book_descriptions_file(book_descriptions_filename):
 def group_book_descriptions(book_descriptions):
     max_columns_count = 2
     max_rows_count = 10
-    chunked_row_book_descriptions = list(chunked(book_descriptions, max_columns_count))
-    grouped_book_descriptions = list(chunked(chunked_row_book_descriptions, max_rows_count))
+    chunked_row_book_descriptions = list(
+        chunked(
+            book_descriptions,
+            max_columns_count
+        )
+    )
+    grouped_book_descriptions = list(
+        chunked(
+            chunked_row_book_descriptions,
+            max_rows_count
+        )
+    )
     return grouped_book_descriptions
 
 
@@ -29,7 +39,8 @@ def render_page(grouped_book_descriptions, template):
         rendered_page = template.render(
             grouped_book_description=grouped_book_description,
             pages_amount=pages_amount,
-            current_page=page)
+            current_page=page
+        )
         filename = os.path.join('pages', f'index{page}.html')
         with open(filename, 'w', encoding="utf8") as file:
             file.write(rendered_page)
