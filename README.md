@@ -5,7 +5,7 @@
 Проект состоит из двух частей:
 
 - Скрипт для cкачивания книг с сайта [tululu.org](https://tululu.org/).
-- Cтатичный сайт для удобного просмотра скачанных книг, пример [сайта](https://pooopkaaa.github.io/download-books/site/pages/index.html).
+- Cтатичный сайт для удобного просмотра скачанных книг, пример [сайта](https://pooopkaaa.github.io/download-books/site/pages/index1.html).
 
 ## Установка
 
